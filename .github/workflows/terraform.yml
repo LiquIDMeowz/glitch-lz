@@ -1,0 +1,223 @@
+name: terraform
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1" # weekly drift check (Monday 05:17 UTC)
+  workflow_dispatch:
+
+# Public repo: least privilege by default, jobs opt in to what they need
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TF_VERSION: 1.15.4
+  TFLINT_VERSION: v0.64.0
+  CHECKOV_VERSION: 3.3.19
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  stages:
+    name: detect stages
+    runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.find.outputs.plan }}
+      apply: ${{ steps.find.outputs.apply }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: find
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          all=$(find . -maxdepth 1 -type d -name '[0-9]-*' -printf '%f\n' | sort)
+          case "$EVENT" in
+            pull_request) changed=$(git diff --name-only "origin/$BASE_REF...HEAD") ;;
+            push)
+              if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                changed=$(git diff --name-only "$BEFORE" HEAD)
+              else
+                changed="$all"
+              fi ;;
+            *) changed="$all" ;;
+          esac
+          # CI or lint config changes re-check every stage
+          if echo "$changed" | grep -qE '^(\.github/|\.tflint\.hcl)'; then changed="$all"; fi
+          plan=$(for s in $all; do echo "$changed" | grep -q "^$s" && echo "$s"; done || true)
+          # 0-bootstrap is human-applied only (see its README); CI plans it for drift
+          apply=$(echo "$plan" | grep -v '^0-bootstrap$' || true)
+          to_json() { jq -Rsc 'split("\n") | map(select(length > 0))'; }
+          echo "plan=$(echo "$plan" | to_json)" >> "$GITHUB_OUTPUT"
+          echo "apply=$(echo "$apply" | to_json)" >> "$GITHUB_OUTPUT"
+          echo "plan: $(echo $plan) | apply: $(echo $apply)"
+
+  static:
+    name: fmt / validate / tflint / checkov
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # checkov SARIF → code scanning
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform validate
+        run: |
+          for s in $(find . -maxdepth 1 -type d -name '[0-9]-*' | sort); do
+            echo "::group::$s"
+            terraform -chdir="$s" init -backend=false >/dev/null
+            terraform -chdir="$s" validate
+            echo "::endgroup::"
+          done
+
+      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+      - name: tflint
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # plugin download rate limit
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+      - name: checkov
+        run: |
+          pipx install "checkov==$CHECKOV_VERSION" >/dev/null
+          checkov -d . --framework terraform --compact --quiet \
+            --output cli --output sarif --output-file-path console,checkov.sarif
+      - name: upload checkov results
+        if: always() && github.event_name != 'schedule'
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: checkov.sarif
+          category: checkov
+
+  plan:
+    name: plan (${{ matrix.stage }})
+    needs: [stages, static]
+    if: needs.stages.outputs.plan != '[]'
+    runs-on: ubuntu-latest
+    # The WIF binding for lz-plan only accepts tokens from this environment
+    environment: lz-plan
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: ${{ fromJSON(needs.stages.outputs.plan) }}
+    env:
+      # Environment secrets: masked in the public logs
+      TF_VAR_org_id: ${{ secrets.ORG_ID }}
+      TF_VAR_billing_account: ${{ secrets.BILLING_ACCOUNT }}
+      TF_VAR_shared_folder_id: ${{ secrets.SHARED_FOLDER_ID }}
+      TF_VAR_admin_email: ${{ secrets.ADMIN_EMAIL }}
+      TF_VAR_github_owner_id: ${{ vars.GH_OWNER_ID }}
+      TF_VAR_lz_repo_id: ${{ vars.LZ_REPO_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.LZ_PLAN_SA }}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: terraform plan
+        working-directory: ${{ matrix.stage }}
+        env:
+          EVENT: ${{ github.event_name }}
+          STAGE: ${{ matrix.stage }}
+        run: |
+          terraform init -backend-config=backend/lz.hcl >/dev/null
+          # Read-only SA can't take the state lock
+          set +e
+          terraform plan -lock=false -no-color -detailed-exitcode -out=tfplan
+          code=$?
+          set -e
+          [ "$code" -eq 1 ] && exit 1
+          summary=$(terraform show -no-color tfplan | grep -E '^(Plan:|No changes)' || echo "No changes.")
+          echo "### $STAGE: $summary" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -eq 2 ] && [ "$EVENT" = "schedule" ]; then
+            echo "::error::Drift detected in $STAGE"
+            exit 1
+          fi
+
+  apply:
+    name: apply (${{ matrix.stage }})
+    needs: [stages, plan]
+    if: github.event_name == 'push' && needs.stages.outputs.apply != '[]'
+    runs-on: ubuntu-latest
+    # Required reviewer + main-only deployment branch; the WIF binding also pins refs/heads/main
+    environment: lz-apply
+    concurrency:
+      group: lz-apply
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      max-parallel: 1 # stages build on each other; apply in order
+      matrix:
+        stage: ${{ fromJSON(needs.stages.outputs.apply) }}
+    env:
+      TF_VAR_org_id: ${{ secrets.ORG_ID }}
+      TF_VAR_billing_account: ${{ secrets.BILLING_ACCOUNT }}
+      TF_VAR_shared_folder_id: ${{ secrets.SHARED_FOLDER_ID }}
+      TF_VAR_admin_email: ${{ secrets.ADMIN_EMAIL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.LZ_APPLY_SA }}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: terraform apply
+        working-directory: ${{ matrix.stage }}
+        run: |
+          terraform init -backend-config=backend/lz.hcl >/dev/null
+          terraform plan -no-color -out=tfplan
+          terraform apply -no-color tfplan
+
+  ci-ok:
+    # Single required status check for the ruleset (matrix job names vary per PR)
+    name: ci-ok
+    needs: [stages, static, plan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done

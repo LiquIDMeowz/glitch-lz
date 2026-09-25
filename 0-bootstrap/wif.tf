@@ -10,6 +10,8 @@ resource "google_iam_workload_identity_pool" "github" {
 }
 
 resource "google_iam_workload_identity_pool_provider" "github" {
+  #checkov:skip=CKV_GCP_118:attribute_condition is set; checkov can't resolve the variable inside it
+  #checkov:skip=CKV_GCP_125:Trust is pinned to numeric owner/repo IDs (immune to repo rename or re-creation), not the name-based sub claim this check parses
   project                            = google_project.iac.project_id
   workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-actions"

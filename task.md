@@ -10,4 +10,4 @@ Mirrors the ClickUp "GlitchLZ — implementation" task (Vladimir space).
 | Stage 2-security | pending | Also fix Cost page budget section (ADR 017 → 022) |
 | Stage 3-projects | pending | Adopt `vk-personal-dashboard`, `wedding2026-vk` via import |
 | Stage 4-network | pending | Optional |
-| CI: GitHub Actions + WIF for glitch-lz | pending | PR gates: fmt, validate, tflint, checkov, plan (lz-plan SA); apply via env `lz-apply`. Plans not posted to PRs (public logs) |
+| CI: GitHub Actions + WIF for glitch-lz | in-progress | PR gates: fmt, validate, tflint, checkov, plan (lz-plan SA); apply via env `lz-apply`. Plans not posted to PRs (public logs) |

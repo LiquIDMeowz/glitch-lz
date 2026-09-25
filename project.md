@@ -47,3 +47,15 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   and manual keys in glitch-iac (cost).
 - ADR 027: Default branch `main`, commits authored with the GitHub noreply address | Reason: matches
   the design (trunk-based on `main`); keeps personal email out of public history.
+- ADR 028: Two LZ identities — `lz-plan` (read-only, env `lz-plan`, PRs) and `lz-apply` (env
+  `lz-apply` + `refs/heads/main`, enforced in the WIF binding). Every GCP-authenticating job declares
+  a GitHub environment | Reason: least privilege for PR plans on a public repo; main-only apply
+  enforced on the GCP side too | Tradeoffs: rejected one SA for plan and apply.
+- ADR 029: PR gates `fmt -check`, `validate`, `tflint`, `checkov`, `plan`, summarised by one required
+  check `ci-ok`; local hook runs only `gitleaks` + `fmt`; all actions pinned by SHA, kept current by
+  Dependabot | Reason: fast commits, full checks before merge, supply-chain safety | Tradeoffs:
+  rejected trivy (fewer GCP rules), the checkov GitHub action (ships an outdated image).
+- ADR 030: Planner uses curated read-only roles instead of `roles/viewer`; apply SA has no
+  `roles/iam.securityAdmin` (3-projects grants SA admin per adopted project); Data Access audit logs
+  on glitch-iac replace bucket access logs | Reason: checkov CKV_GCP_115 / 45 / 62 | Tradeoffs:
+  planner roles must be extended when a new stage's plan hits a 403.

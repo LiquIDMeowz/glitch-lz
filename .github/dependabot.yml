@@ -1,0 +1,15 @@
+# Keeps SHA-pinned actions and provider versions current
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+  - package-ecosystem: terraform
+    directories: ["/[0-9]-*"]
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
