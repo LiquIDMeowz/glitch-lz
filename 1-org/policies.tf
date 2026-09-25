@@ -1,0 +1,211 @@
+# Org policies. Legacy projects (tag legacy=true) are exempted only where the rule would break
+# their existing deploys (CMEK, DRS); everything else applies org-wide.
+
+locals {
+  # Boolean constraints enforced org-wide. The first six were set by Google's secure-by-default
+  # baseline when the org was created and are imported below.
+  enforced_booleans = toset([
+    "iam.disableServiceAccountKeyCreation",
+    "iam.disableServiceAccountKeyUpload",
+    "iam.automaticIamGrantsForDefaultServiceAccounts",
+    "storage.uniformBucketLevelAccess",
+    "compute.setNewProjectDefaultToZonalDNSOnly",
+    "storage.publicAccessPrevention",
+    "compute.skipDefaultNetworkCreation",
+    "compute.requireOsLogin",
+    "compute.disableSerialPortAccess",
+    "sql.restrictPublicIp",
+  ])
+
+  baseline_imports = toset([
+    "iam.disableServiceAccountKeyCreation",
+    "iam.disableServiceAccountKeyUpload",
+    "iam.automaticIamGrantsForDefaultServiceAccounts",
+    "storage.uniformBucketLevelAccess",
+    "compute.setNewProjectDefaultToZonalDNSOnly",
+  ])
+
+  # Services whose resources must use CMEK: the ones Autokey can key for free (ADR 011).
+  # Secret Manager, Pub/Sub, Cloud SQL and Firestore would need manual keys ($0.06/version/month);
+  # added when a workload needs them.
+  cmek_services = [
+    "storage.googleapis.com",
+    "bigquery.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "compute.googleapis.com",
+  ]
+}
+
+import {
+  for_each = local.baseline_imports
+  to       = google_org_policy_policy.boolean[each.value]
+  id       = "${local.org}/policies/${each.value}"
+}
+
+resource "google_org_policy_policy" "boolean" {
+  for_each = local.enforced_booleans
+
+  name   = "${local.org}/policies/${each.value}"
+  parent = local.org
+
+  spec {
+    rules {
+      enforce = "TRUE"
+    }
+  }
+}
+
+import {
+  to = google_org_policy_policy.protocol_forwarding
+  id = "${local.org}/policies/compute.restrictProtocolForwardingCreationForTypes"
+}
+
+resource "google_org_policy_policy" "protocol_forwarding" {
+  name   = "${local.org}/policies/compute.restrictProtocolForwardingCreationForTypes"
+  parent = local.org
+
+  spec {
+    rules {
+      values {
+        allowed_values = ["INTERNAL"]
+      }
+    }
+  }
+}
+
+resource "google_org_policy_policy" "vm_external_ip" {
+  name   = "${local.org}/policies/compute.vmExternalIpAccess"
+  parent = local.org
+
+  spec {
+    rules {
+      deny_all = "TRUE"
+    }
+  }
+}
+
+# europe-west3 only; tag location=eu allows any EU location (ADR 010)
+resource "google_org_policy_policy" "resource_locations" {
+  name   = "${local.org}/policies/gcp.resourceLocations"
+  parent = local.org
+
+  spec {
+    rules {
+      condition {
+        title      = "location=eu"
+        expression = local.match_tag["location/eu"]
+      }
+      values {
+        allowed_values = ["in:eu-locations"]
+      }
+    }
+    rules {
+      values {
+        allowed_values = ["in:europe-west3-locations"]
+      }
+    }
+  }
+}
+
+resource "google_org_policy_policy" "cmek_services" {
+  name   = "${local.org}/policies/gcp.restrictNonCmekServices"
+  parent = local.org
+
+  spec {
+    rules {
+      condition {
+        title      = "legacy=true"
+        expression = local.match_tag["legacy/true"]
+      }
+      allow_all = "TRUE"
+    }
+    rules {
+      values {
+        denied_values = local.cmek_services
+      }
+    }
+  }
+
+  # Exemption tags must be bound before the policy can bite
+  depends_on = [google_tags_tag_binding.legacy]
+}
+
+# CMEK keys may only come from projects in the Shared folder (Autokey key projects + glitch-iac)
+resource "google_org_policy_policy" "cmek_key_projects" {
+  name   = "${local.org}/policies/gcp.restrictCmekCryptoKeyProjects"
+  parent = local.org
+
+  spec {
+    rules {
+      values {
+        allowed_values = ["under:${google_folder.top["shared"].name}"]
+      }
+    }
+  }
+}
+
+# Internal ingress only; tag ingress=public for Firebase-proxied / public services (ADR 013)
+resource "google_org_policy_policy" "run_ingress" {
+  name   = "${local.org}/policies/run.allowedIngress"
+  parent = local.org
+
+  spec {
+    rules {
+      condition {
+        title      = "ingress=public"
+        expression = local.match_tag["ingress/public"]
+      }
+      allow_all = "TRUE"
+    }
+    rules {
+      values {
+        allowed_values = ["is:internal", "is:internal-and-cloud-load-balancing"]
+      }
+    }
+  }
+
+  depends_on = [google_tags_tag_binding.public_ingress]
+}
+
+resource "google_org_policy_policy" "contact_domains" {
+  name   = "${local.org}/policies/essentialcontacts.allowedContactDomains"
+  parent = local.org
+
+  spec {
+    rules {
+      values {
+        allowed_values = ["@gmail.com"]
+      }
+    }
+  }
+}
+
+# Domain-restricted sharing (ADR 012). DRY RUN first: violations are logged, nothing is blocked.
+# Promote dry_run_spec to spec once the logs show no unexpected principals.
+resource "google_org_policy_policy" "allowed_members" {
+  name   = "${local.org}/policies/iam.managed.allowedPolicyMembers"
+  parent = local.org
+
+  dry_run_spec {
+    rules {
+      condition {
+        title      = "legacy=true"
+        expression = local.match_tag["legacy/true"]
+      }
+      enforce = "FALSE"
+    }
+    rules {
+      enforce = "TRUE"
+      parameters = jsonencode({
+        allowedPrincipalSets = ["//cloudresourcemanager.googleapis.com/${local.org}"]
+        allowedMemberSubjects = [
+          "user:${var.admin_email}",
+          # Google system accounts that publish budget alerts to Pub/Sub (kill switch)
+          "serviceAccount:billing-budget-alert@system.gserviceaccount.com",
+        ]
+      })
+    }
+  }
+
+  depends_on = [google_tags_tag_binding.legacy]
+}
