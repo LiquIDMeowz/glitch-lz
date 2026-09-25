@@ -208,6 +208,9 @@ resource "google_org_policy_policy" "allowed_members" {
         allowedPrincipalSets = ["//cloudresourcemanager.googleapis.com/${local.org}"]
         allowedMemberSubjects = [
           "user:${var.admin_email}",
+          "user:${var.kalina_email}",
+          # PAM's org-level service agent writes the temporary grants
+          "serviceAccount:service-org-${var.org_id}@gcp-sa-pam.iam.gserviceaccount.com",
           # Google system accounts that publish budget alerts to Pub/Sub (kill switch)
           "serviceAccount:billing-budget-alert@system.gserviceaccount.com",
         ]

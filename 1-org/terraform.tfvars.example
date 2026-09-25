@@ -1,3 +1,4 @@
 # Copy to terraform.tfvars (git-ignored)
 org_id      = "000000000000"
 admin_email = "admin@example.com"
+kalina_email     = "operator@example.com"

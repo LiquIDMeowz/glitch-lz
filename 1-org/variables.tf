@@ -14,3 +14,9 @@ variable "region" {
   type        = string
   default     = "europe-west3"
 }
+
+variable "kalina_email" {
+  description = "Second operator (Gmail): read-only standing access + PAM elevation (ADR 045)."
+  type        = string
+  sensitive   = true
+}

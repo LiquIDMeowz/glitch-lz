@@ -20,6 +20,7 @@ locals {
     "logging.googleapis.com",
     "monitoring.googleapis.com",
     "orgpolicy.googleapis.com",
+    "privilegedaccessmanager.googleapis.com",
     "pubsub.googleapis.com",
     "run.googleapis.com",
     "serviceusage.googleapis.com",

@@ -20,6 +20,12 @@ variable "admin_email" {
   sensitive   = true
 }
 
+variable "kalina_email" {
+  description = "Second operator; may impersonate lz-plan for local read-only plans (ADR 045)."
+  type        = string
+  sensitive   = true
+}
+
 variable "github_owner_id" {
   description = "Numeric GitHub account ID allowed to federate (IDs survive renames, unlike names)."
   type        = string
@@ -66,6 +72,7 @@ variable "lz_apply_org_roles" {
     "roles/serviceusage.serviceUsageAdmin", # adopted projects (not created by the SA)
     "roles/accesscontextmanager.policyAdmin",
     "roles/monitoring.metricsScopesAdmin", # link projects into glitch-monitoring's scope (ERR-003c)
+    "roles/privilegedaccessmanager.admin", # PAM entitlements (1-org, ADR 045)
   ]
 }
 
@@ -89,5 +96,6 @@ variable "lz_plan_org_roles" {
     "roles/storage.bucketViewer",
     "roles/essentialcontacts.viewer",
     "roles/accesscontextmanager.policyReader",
+    "roles/privilegedaccessmanager.viewer",
   ]
 }
