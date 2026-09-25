@@ -8,7 +8,7 @@ if ! command -v gitleaks >/dev/null 2>&1; then
 fi
 gitleaks git --staged --redact --no-banner
 
-staged_tf=$(git diff --cached --name-only --diff-filter=ACM -- '*.tf' '*.tfvars.example')
+staged_tf=$(git diff --cached --name-only --diff-filter=ACM -- '*.tf' '*.tfvars')
 if [ -n "$staged_tf" ]; then
   # shellcheck disable=SC2086
   terraform fmt -check -diff $staged_tf
