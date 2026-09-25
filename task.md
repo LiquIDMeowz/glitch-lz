@@ -16,3 +16,4 @@ Mirrors the ClickUp "GlitchLZ — implementation" task (Vladimir space).
 | Dev kill switch (budget-alerts → detach billing) | in-progress | Log-only test passed; enforcing; real tests: prod → 403, dev → detach + re-link |
 | VPC-SC dry-run perimeter | pending | Once internal workload projects exist |
 | Delete old GlitchHub $5 budget | pending | After 3-projects creates `project:vk-personal-dashboard` |
+| Operators + PAM (ADR 045) | in-progress | Kalina: read-only + PAM (dev self, prod/org approved by Vlad). Vlad unchanged for now |

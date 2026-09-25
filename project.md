@@ -109,4 +109,11 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   ADR 033).
 - ADR 043: 0-bootstrap's provider sets glitch-iac as quota project | Reason: admin credentials
   otherwise hit the shared Cloud SDK project's exhausted billing-API quota (ERR-004).
-
+- ADR 045: Second operator (Kalina, Gmail) has standing read-only access (browser, security
+  reviewer, logging/monitoring/org-policy/PAM/tag viewers) and elevates with PAM: DEV `roles/writer`
+  self-service (8h); PROD `roles/writer` and org `organizationAdmin` approved by Vlad (2h).
+  `roles/writer` has no IAM-admin permissions, so a grant can't create permanent access. Vlad keeps
+  his standing super-admin roles for now (break-glass, outside Terraform). Nobody impersonates
+  lz-apply; both may impersonate lz-plan | Reason: least privilege + approval for the second
+  operator without lock-out risk | Tradeoffs: rejected Cloud Identity (org isn't bound to a
+  directory; a new org would be needed) and org-level `roles/viewer` (basic role, reads data).

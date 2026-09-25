@@ -76,14 +76,20 @@ resource "google_storage_bucket_iam_member" "lz_plan_state" {
   member = google_service_account.lz_plan.member
 }
 
-# Local runs impersonate the SAs instead of using the admin's own org-wide rights
-resource "google_service_account_iam_member" "admin_impersonation" {
+# Operators may impersonate lz-plan for local read-only plans. Nobody impersonates lz-apply:
+# that would be a standing org-admin path around PAM (ADR 045).
+resource "google_service_account_iam_member" "plan_impersonation" {
   for_each = {
-    plan  = google_service_account.lz_plan.name
-    apply = google_service_account.lz_apply.name
+    vlad   = var.admin_email
+    kalina = var.kalina_email
   }
 
-  service_account_id = each.value
+  service_account_id = google_service_account.lz_plan.name
   role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "user:${var.admin_email}"
+  member             = "user:${each.value}"
+}
+
+moved {
+  from = google_service_account_iam_member.admin_impersonation["plan"]
+  to   = google_service_account_iam_member.plan_impersonation["vlad"]
 }

@@ -3,6 +3,7 @@ org_id           = "000000000000"
 billing_account  = "000000-000000-000000"
 shared_folder_id = "000000000000"
 admin_email      = "admin@example.com"
+kalina_email     = "operator@example.com"
 
 # Public GitHub IDs: gh api repos/<owner>/<repo> --jq '.owner.id, .id'
 github_owner_id = "72095089"
