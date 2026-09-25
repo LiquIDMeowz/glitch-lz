@@ -27,3 +27,8 @@ output "wif_pool" {
   description = "Pool resource name; 3-projects binds workload deployer SAs to it."
   value       = google_iam_workload_identity_pool.github.name
 }
+
+output "tfstate_lister_role" {
+  description = "Custom role ID for workload deployers on the dev/prod state buckets."
+  value       = google_project_iam_custom_role.tfstate_lister.id
+}

@@ -49,3 +49,14 @@ resource "google_storage_bucket" "state" {
     prevent_destroy = true
   }
 }
+
+# Terraform's GCS backend lists objects, and IAM conditions can't scope a list call to a prefix.
+# Workload deployers get this role unconditionally (names only, no content) plus object access
+# conditioned on their own <app>/<env>/ prefix (ADR 039).
+resource "google_project_iam_custom_role" "tfstate_lister" {
+  project     = google_project.iac.project_id
+  role_id     = "tfStateLister"
+  title       = "Terraform state lister"
+  description = "List state object names and read bucket metadata; object access is granted per prefix."
+  permissions = ["storage.objects.list", "storage.buckets.get"]
+}

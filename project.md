@@ -89,4 +89,17 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
 - ADR 037: No Data Access audit logs on the key projects | Reason: every workload encrypt/decrypt
   would be logged, turning a traffic flood into a logging bill (ADR 021) | Tradeoffs: admin
   activity on keys is still always logged; CKV2_GCP_5 skipped for those projects.
+- ADR 038: One deployer SA per workload project; dev federation accepts any ref in environment
+  `dev` (PRs plan dev), prod only environment `prod` on `refs/heads/main` | Reason: simple, prod
+  gated on the GCP side too | Tradeoffs: PRs can't plan prod — prod is planned in the promotion job;
+  a read-only prod planner can be added later.
+- ADR 039: Workload state isolation per prefix: custom role `tfStateLister` (objects.list,
+  buckets.get) unconditionally + `objectUser` conditioned on `<app>/<env>/` | Reason: the GCS backend
+  must list, and IAM conditions can't scope list calls | Tradeoffs: deployers see other apps' state
+  object names (not contents) in the same env bucket.
+- ADR 040: Legacy projects get budget + metrics scope via data sources, not imported as
+  `google_project` | Reason: importing would let Terraform change live apps' labels / settings |
+  Tradeoffs: full adoption deferred to their rebuild.
+- ADR 041: No Data Access audit logs on workload projects | Reason: IAP authz and Storage reads log
+  per request — a flood becomes a logging bill (ADR 021) | Tradeoffs: CKV2_GCP_5 skipped.
 
