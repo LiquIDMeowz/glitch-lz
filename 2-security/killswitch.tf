@@ -1,11 +1,12 @@
 # Dev kill switch (ADR 035 / 023): budget-alerts → push → Cloud Run → detach billing.
 # Billing rights only on the DEV folder, so prod and Shared projects are out of reach by IAM.
-# ENFORCE=false logs "would detach" only; flip after the end-to-end test.
+# ENFORCE=false logs "would detach" only (used for the first end-to-end test).
 
 variable "kill_switch_enforce" {
   description = "false: log what would be detached; true: detach billing."
   type        = bool
-  default     = false
+  # Enforcing since 2026-09-25, after the log-only test (push → Cloud Run → parse) passed
+  default = true
 }
 
 locals {
