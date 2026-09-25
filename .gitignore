@@ -1,0 +1,35 @@
+# Terraform state and plans hold every attribute in plain text (incl. secrets) — state lives only in GCS
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan*
+crash.log
+crash.*.log
+.terraform/
+# Lock files are committed: they pin provider checksums
+!.terraform.lock.hcl
+
+# Real values (org / billing IDs, emails) stay local or in GitHub Actions variables
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Credentials of any kind
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+*-sa.json
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

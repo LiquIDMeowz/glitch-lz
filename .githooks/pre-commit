@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Public repo: block secrets and unformatted Terraform before they reach history.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not installed — refusing to commit to a public repo" >&2
+  exit 1
+fi
+gitleaks git --staged --redact --no-banner
+
+staged_tf=$(git diff --cached --name-only --diff-filter=ACM -- '*.tf' '*.tfvars.example')
+if [ -n "$staged_tf" ]; then
+  # shellcheck disable=SC2086
+  terraform fmt -check -diff $staged_tf
+fi
