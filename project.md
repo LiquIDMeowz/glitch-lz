@@ -76,3 +76,17 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   `gcloud run deploy --source` / Firebase-console resource creation unusable in new projects.
 - ADR 034: IDs are looked up with data sources (folders by display name, projects by ID) instead
   of committed or passed as secrets | Reason: public repo, fewer CI secrets.
+- ADR 035: Every project gets a $10/month budget (supersedes ADR 022's per-project sizes); the
+  billing-account budget is $10 with alerts at 50–200 %. Dev projects: kill switch detaches billing
+  at 100 % of their own budget (per project, not per folder); prod: alert only until the kill
+  switch is tested, then at a multiple; Shared: alert only | Reason: $1–5 tripwires would be noise;
+  per-project kill switch contains a runaway without touching other projects; realistic worst case
+  ≈ $10–15 per runaway dev project given hours of budget-data lag | Tradeoffs: budgets don't cap —
+  max_instances, quotas and auth-before-container remain the hard limits.
+- ADR 036: Manual CMEK keys (Firestore, Cloud Tasks, Cloud Run functions) rotate yearly, not every
+  90 days | Reason: every version bills $0.06/month and must stay while data uses it | Tradeoffs:
+  checkov CKV_GCP_43 skipped.
+- ADR 037: No Data Access audit logs on the key projects | Reason: every workload encrypt/decrypt
+  would be logged, turning a traffic flood into a logging bill (ADR 021) | Tradeoffs: admin
+  activity on keys is still always logged; CKV2_GCP_5 skipped for those projects.
+

@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (git-ignored)
+org_id          = "000000000000"
+billing_account = "000000-000000-000000"
+admin_email     = "admin@example.com"
