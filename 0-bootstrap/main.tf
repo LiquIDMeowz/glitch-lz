@@ -19,6 +19,7 @@ locals {
     "logging.googleapis.com",
     "monitoring.googleapis.com",
     "orgpolicy.googleapis.com",
+    "pubsub.googleapis.com",
     "serviceusage.googleapis.com",
     "storage.googleapis.com",
     "sts.googleapis.com",
