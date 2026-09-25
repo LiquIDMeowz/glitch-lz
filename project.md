@@ -68,8 +68,11 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   enforced immediately | Reason: service-agent exceptions for the managed constraint are poorly
   documented; all other policies only affect resource creation and every non-legacy project already
   complies | Tradeoffs: a window where DRS only logs.
-- ADR 033: CMEK required for Storage, BigQuery, Artifact Registry and Compute only (the services
-  Autokey keys for free); CMEK keys only from projects under Shared | Reason: cost ceiling | Tradeoffs:
-  Secret Manager / Pub/Sub / Cloud SQL / Firestore stay on Google-managed keys until needed.
+- ADR 033 (revised 2026-09-25): CMEK required for every used service that supports it — Artifact
+  Registry, BigQuery, Cloud Run, Cloud Run functions, Cloud SQL, Cloud Tasks, Compute, Firestore,
+  Pub/Sub, Secret Manager, Storage; keys only from projects under Shared | Reason: owner requirement;
+  Autokey covers most for free, manual keys (Firestore, functions, Tasks) cost ~$0.36/month for dev +
+  prod | Tradeoffs: Cloud Logging excluded (ADR 011); functions deployed via Cloud Run to use Autokey;
+  `gcloud run deploy --source` / Firebase-console resource creation unusable in new projects.
 - ADR 034: IDs are looked up with data sources (folders by display name, projects by ID) instead
   of committed or passed as secrets | Reason: public repo, fewer CI secrets.

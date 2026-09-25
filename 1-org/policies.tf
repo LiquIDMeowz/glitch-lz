@@ -25,14 +25,22 @@ locals {
     "compute.setNewProjectDefaultToZonalDNSOnly",
   ])
 
-  # Services whose resources must use CMEK: the ones Autokey can key for free (ADR 011).
-  # Secret Manager, Pub/Sub, Cloud SQL and Firestore would need manual keys ($0.06/version/month);
-  # added when a workload needs them.
+  # CMEK required for every service we use that supports it (ADR 033, revised). Autokey keys
+  # most of them for free; Firestore, Cloud Run functions (cloudfunctions API) and Cloud Tasks
+  # need manual keys from glitch-kms-dev / -prod (2-security). Cloud Logging stays excluded
+  # (ADR 011: breaks Error Reporting).
   cmek_services = [
-    "storage.googleapis.com",
-    "bigquery.googleapis.com",
     "artifactregistry.googleapis.com",
+    "bigquery.googleapis.com",
+    "cloudfunctions.googleapis.com",
+    "cloudtasks.googleapis.com",
     "compute.googleapis.com",
+    "firestore.googleapis.com",
+    "pubsub.googleapis.com",
+    "run.googleapis.com",
+    "secretmanager.googleapis.com",
+    "sqladmin.googleapis.com",
+    "storage.googleapis.com",
   ]
 }
 
