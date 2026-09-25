@@ -17,8 +17,26 @@ Budgets alert, they never cap spend. Every budget emails the admin and publishes
 | `billing-account-total` | $10 | 50 / 100 / 150 / 200 %, forecast 100 % |
 | `project:<id>` (Shared projects here; workload projects in 3-projects) | $10 | 50 / 90 / 100 %, forecast 100 % |
 
-Shared projects are never killed. The dev kill switch (detach billing at 100 %) subscribes to
-`budget-alerts` and maps `project:<id>` display names to projects — added with 3-projects.
+Shared projects are never killed.
+
+## Dev kill switch
+
+`budget-alerts` → push subscription (OIDC as `budget-push`) → Cloud Run `kill-switch` in
+glitch-monitoring (internal ingress, max 1 instance, CMEK, stdlib-only Python pulled through the
+CMEK Docker Hub proxy `dockerhub`). For a `project:<id>` budget with cost ≥ amount it detaches
+billing. Its SA holds `billing.projectManager` + `browser` **only on the DEV folder**, so prod and
+Shared projects are refused by IAM whatever the code does.
+
+`kill_switch_enforce = false` (default) only logs "would detach". Test end to end, then set it to
+`true`:
+
+```sh
+gcloud pubsub topics publish budget-alerts --project glitch-monitoring \
+  --message '{"budgetDisplayName":"project:glitch-ops-dev","costAmount":11,"budgetAmount":10}'
+gcloud logging read 'resource.labels.service_name="kill-switch"' --project glitch-monitoring --freshness 10m
+```
+
+Re-enable billing on a killed project manually after fixing the cause (Billing → My projects).
 
 ## Cost
 
@@ -26,5 +44,4 @@ Shared projects are never killed. The dev kill switch (detach billing at 100 %) 
 
 ## Not here (yet)
 
-- Kill switch function — with 3-projects, once dev projects exist
 - VPC-SC dry-run perimeter (ADR 016) — once internal workload projects exist

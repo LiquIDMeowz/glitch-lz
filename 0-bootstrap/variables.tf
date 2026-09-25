@@ -83,6 +83,8 @@ variable "lz_plan_org_roles" {
     "roles/logging.viewer",
     "roles/monitoring.viewer",
     "roles/pubsub.viewer",
+    "roles/run.viewer",
+    "roles/artifactregistry.reader",
     "roles/cloudkms.viewer",
     "roles/storage.bucketViewer",
     "roles/essentialcontacts.viewer",

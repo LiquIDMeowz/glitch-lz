@@ -9,10 +9,21 @@ locals {
   # Shared projects owned by this stage and the roles lz-apply needs inside them. Granted
   # explicitly (organizationAdmin can set project IAM) instead of relying on creator-owner.
   shared_projects = {
-    kms-dev    = { apis = [], roles = ["roles/cloudkms.admin"] }
-    kms-prod   = { apis = [], roles = ["roles/cloudkms.admin"] }
-    logging    = { apis = [], roles = ["roles/logging.admin"] }
-    monitoring = { apis = ["pubsub.googleapis.com"], roles = ["roles/monitoring.admin", "roles/pubsub.admin", "roles/cloudkms.autokeyUser"] }
+    kms-dev  = { apis = [], roles = ["roles/cloudkms.admin"] }
+    kms-prod = { apis = [], roles = ["roles/cloudkms.admin"] }
+    logging  = { apis = [], roles = ["roles/logging.admin"] }
+    monitoring = {
+      apis = ["artifactregistry.googleapis.com", "cloudbilling.googleapis.com", "pubsub.googleapis.com", "run.googleapis.com"]
+      roles = [
+        "roles/artifactregistry.admin",
+        "roles/cloudkms.autokeyUser",
+        "roles/iam.serviceAccountAdmin",
+        "roles/iam.serviceAccountUser",
+        "roles/monitoring.admin",
+        "roles/pubsub.admin",
+        "roles/run.admin",
+      ]
+    }
   }
 }
 
