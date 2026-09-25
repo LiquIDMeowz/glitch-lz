@@ -65,6 +65,7 @@ variable "lz_apply_org_roles" {
     "roles/cloudkms.autokeyAdmin",
     "roles/serviceusage.serviceUsageAdmin", # adopted projects (not created by the SA)
     "roles/accesscontextmanager.policyAdmin",
+    "roles/monitoring.metricsScopesAdmin", # link projects into glitch-monitoring's scope (ERR-003c)
   ]
 }
 

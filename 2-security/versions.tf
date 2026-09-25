@@ -14,15 +14,12 @@ terraform {
   }
 }
 
-# Budgets and some org-level APIs need an explicit quota project
+# No provider-level quota-project override: it sent every call (e.g. Pub/Sub) with glitch-iac as
+# quota project (ERR-003b). Service accounts don't need it; local ADC uses glitch-iac already.
 provider "google" {
-  region                = var.region
-  billing_project       = local.iac_project
-  user_project_override = true
+  region = var.region
 }
 
 provider "google-beta" {
-  region                = var.region
-  billing_project       = local.iac_project
-  user_project_override = true
+  region = var.region
 }
