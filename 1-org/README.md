@@ -7,13 +7,13 @@ Org-wide guardrails, applied by CI (`lz-apply`, environment approval, `main` onl
 - **Org policies**
   - Secure-by-default baseline (imported) + `storage.publicAccessPrevention`, `compute.skipDefaultNetworkCreation`, `compute.requireOsLogin`, `compute.disableSerialPortAccess`, `compute.vmExternalIpAccess` (deny all), `sql.restrictPublicIp`
   - `gcp.resourceLocations`: `europe-west3` only; `location=eu` → any EU location
-  - `gcp.restrictNonCmekServices`: Storage, BigQuery, Artifact Registry, Compute need CMEK (Autokey); `legacy=true` exempt
+  - `gcp.restrictNonCmekServices`: CMEK required for Artifact Registry, BigQuery, Cloud Run, Cloud Run functions, Cloud SQL, Cloud Tasks, Compute, Firestore, Pub/Sub, Secret Manager, Storage; `legacy=true` exempt. Tools that create unencrypted side resources (`gcloud run deploy --source`, Firebase console) fail in new projects — provision through modules / CI
   - `gcp.restrictCmekCryptoKeyProjects`: keys only from projects under Shared
   - `run.allowedIngress`: internal / internal+LB; `ingress=public` → any
   - `essentialcontacts.allowedContactDomains`: `@gmail.com`
   - `iam.managed.allowedPolicyMembers` (domain-restricted sharing): **dry run** — org principals, the admin and the budget-alert system account; `legacy=true` exempt
 - **Essential contact**: admin, all categories
-- **Audit logs**: Data Access for `sts` and `iamcredentials` (who federated / impersonated)
+- **Audit logs**: Data Access for `sts` and `iam` (federation and impersonation) (who federated / impersonated)
 
 Folder IDs and project numbers are looked up with data sources, not committed.
 

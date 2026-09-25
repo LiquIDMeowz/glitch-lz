@@ -6,10 +6,10 @@ resource "google_essential_contacts_contact" "admin" {
 }
 
 # Data Access logs for identity only: who exchanged a GitHub token (sts) and who minted SA
-# tokens (iamcredentials). Low volume; deliberately no KMS / storage data logs org-wide, which
+# tokens (IAM service account credentials are audited under iam.googleapis.com). Low volume; deliberately no KMS / storage data logs org-wide, which
 # a request flood could turn into a logging bill (ADR 021).
 resource "google_organization_iam_audit_config" "identity" {
-  for_each = toset(["sts.googleapis.com", "iamcredentials.googleapis.com"])
+  for_each = toset(["sts.googleapis.com", "iam.googleapis.com"])
 
   org_id  = var.org_id
   service = each.value
