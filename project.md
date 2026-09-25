@@ -102,4 +102,11 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   Tradeoffs: full adoption deferred to their rebuild.
 - ADR 041: No Data Access audit logs on workload projects | Reason: IAP authz and Storage reads log
   per request — a flood becomes a logging bill (ADR 021) | Tradeoffs: CKV2_GCP_5 skipped.
+- ADR 042: Kill switch = Cloud Run service (stdlib Python, pinned public image via CMEK Docker Hub
+  proxy) behind a Pub/Sub push subscription; billing rights only on the DEV folder; starts with
+  `ENFORCE=false` | Reason: no build pipeline or dependencies to maintain; IAM, not code, decides
+  which projects can be killed | Tradeoffs: rejected Cloud Functions API (needs manual CMEK key,
+  ADR 033).
+- ADR 043: 0-bootstrap's provider sets glitch-iac as quota project | Reason: admin credentials
+  otherwise hit the shared Cloud SDK project's exhausted billing-API quota (ERR-004).
 

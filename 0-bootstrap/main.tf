@@ -9,6 +9,7 @@ locals {
   # glitch-iac is the quota project for every LZ stage, so it needs the APIs they call
   services = [
     "accesscontextmanager.googleapis.com",
+    "artifactregistry.googleapis.com",
     "billingbudgets.googleapis.com",
     "cloudbilling.googleapis.com",
     "cloudkms.googleapis.com",
@@ -20,6 +21,7 @@ locals {
     "monitoring.googleapis.com",
     "orgpolicy.googleapis.com",
     "pubsub.googleapis.com",
+    "run.googleapis.com",
     "serviceusage.googleapis.com",
     "storage.googleapis.com",
     "sts.googleapis.com",

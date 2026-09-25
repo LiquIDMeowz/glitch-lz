@@ -13,6 +13,6 @@ Mirrors the ClickUp "GlitchLZ — implementation" task (Vladimir space).
 | CI: GitHub Actions + WIF for glitch-lz | done | PR gates: fmt, validate, tflint, checkov, plan (lz-plan SA); apply via env `lz-apply`. Plans not posted to PRs (public logs) |
 | Promote DRS from dry run to enforced | pending | After reviewing dry-run violations |
 | Remove legacy tags | pending | wedding: when retired/rebuilt; GlitchHub dev: after prod promotion + dev teardown |
-| Dev kill switch (budget-alerts → detach billing) | pending | With 3-projects |
+| Dev kill switch (budget-alerts → detach billing) | in-progress | ENFORCE=false first; test with a fake notification, then enforce |
 | VPC-SC dry-run perimeter | pending | Once internal workload projects exist |
 | Delete old GlitchHub $5 budget | pending | After 3-projects creates `project:vk-personal-dashboard` |

@@ -28,3 +28,11 @@ CI strips results that carry `suppressions` before upload (`jq`); threads auto-r
 - b) ~~Removed the provider-level quota-project override~~ — **did not work** (run 36140137823, same error for consumer project 364574903782 = glitch-iac): calls made as lz-apply in CI are attributed to the SA's own project regardless. Real fix: enable `pubsub.googleapis.com` in glitch-iac (0-bootstrap `local.services`), consistent with glitch-iac being the quota project for every LZ API. Rule: when a stage starts using a new API, add it to 0-bootstrap's list.
 - c) `roles/monitoring.metricsScopesAdmin` at org for lz-apply (0-bootstrap, human-applied).
 
+## ERR-004 — 0-bootstrap local plan hangs (cloudbilling 429)
+- **Date:** 2026-09-25
+- **Tried:** local `terraform plan` (admin ADC) on the kill-switch branch; first attempt hung >5 min and left a stale lock after SIGINT/TERM; retry with `timeout 200` hung the same way.
+- **Result:** TF_LOG showed `google_billing_account_iam_member` reads retrying on `429 RATE_LIMIT_EXCEEDED` for consumer `projects/764086051850` — the shared Google Cloud SDK project, not ours (user credentials sent no quota project to this API). Stale locks removed with `terraform force-unlock <generation>` (GCS lock ID = object generation, not the UUID in the lock file).
+
+### Resolution
+0-bootstrap provider sets `billing_project = glitch-iac` + `user_project_override = true` (only this stage runs with user credentials; CI SAs bill to glitch-iac anyway).
+
