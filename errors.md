@@ -25,6 +25,6 @@ CI strips results that carry `suppressions` before upload (`jq`); threads auto-r
 
 ### Resolution
 - a) Bind `service-${project_number}@gcp-sa-cloudkms.iam.gserviceaccount.com` (as in Google's Autokey Terraform example).
-- b) Removed the provider-level quota-project override (only needed for user ADC; ADC quota project is glitch-iac anyway).
+- b) ~~Removed the provider-level quota-project override~~ — **did not work** (run 36140137823, same error for consumer project 364574903782 = glitch-iac): calls made as lz-apply in CI are attributed to the SA's own project regardless. Real fix: enable `pubsub.googleapis.com` in glitch-iac (0-bootstrap `local.services`), consistent with glitch-iac being the quota project for every LZ API. Rule: when a stage starts using a new API, add it to 0-bootstrap's list.
 - c) `roles/monitoring.metricsScopesAdmin` at org for lz-apply (0-bootstrap, human-applied).
 
