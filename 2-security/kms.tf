@@ -18,13 +18,17 @@ resource "google_project_service_identity" "kms_agent" {
   depends_on = [google_project_service.shared]
 }
 
-# Autokey's service agent creates keys and binds them to workload service agents
+# Autokey's service agent creates keys and binds them to workload service agents. The
+# service-identity call returns the EKM agent; the Cloud KMS agent it also creates is
+# service-<number>@gcp-sa-cloudkms (ERR-003a).
 resource "google_project_iam_member" "kms_agent_admin" {
   for_each = local.key_envs
 
   project = google_project.shared[each.value].project_id
   role    = "roles/cloudkms.admin"
-  member  = google_project_service_identity.kms_agent[each.key].member
+  member  = "serviceAccount:service-${google_project.shared[each.value].number}@gcp-sa-cloudkms.iam.gserviceaccount.com"
+
+  depends_on = [google_project_service_identity.kms_agent]
 }
 
 resource "google_kms_autokey_config" "env" {
