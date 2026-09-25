@@ -4,6 +4,7 @@ locals {
 }
 
 resource "google_storage_bucket" "state" {
+  #checkov:skip=CKV_GCP_62:Access is recorded by Data Access audit logs on glitch-iac (main.tf); usage-log buckets add cost without more detail
   for_each = local.state_buckets
 
   project  = google_project.iac.project_id

@@ -58,7 +58,8 @@ variable "lz_apply_org_roles" {
     "roles/resourcemanager.tagAdmin",
     "roles/resourcemanager.tagUser",
     "roles/orgpolicy.policyAdmin",
-    "roles/iam.securityAdmin", # service account IAM across the org
+    # No roles/iam.securityAdmin (CKV_GCP_45): the SA owns the projects it creates, and
+    # 3-projects grants it roles/iam.serviceAccountAdmin only on adopted projects.
     "roles/logging.configWriter",
     "roles/essentialcontacts.admin",
     "roles/cloudkms.autokeyAdmin",
@@ -68,13 +69,21 @@ variable "lz_apply_org_roles" {
 }
 
 variable "lz_plan_org_roles" {
-  description = "Org-level read-only roles for the LZ plan SA (PR plans)."
+  description = "Org-level read-only roles for the LZ plan SA (PR plans). Curated instead of roles/viewer (CKV_GCP_115); extend when a stage's plan hits a 403."
   type        = set(string)
   default = [
-    "roles/viewer",
+    "roles/browser",
     "roles/iam.securityReviewer",
+    "roles/iam.serviceAccountViewer",
+    "roles/iam.workloadIdentityPoolViewer",
     "roles/orgpolicy.policyViewer",
+    "roles/resourcemanager.tagViewer",
+    "roles/serviceusage.serviceUsageViewer",
     "roles/logging.viewer",
+    "roles/monitoring.viewer",
+    "roles/cloudkms.viewer",
+    "roles/storage.bucketViewer",
+    "roles/essentialcontacts.viewer",
     "roles/accesscontextmanager.policyReader",
   ]
 }

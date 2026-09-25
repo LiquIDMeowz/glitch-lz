@@ -36,6 +36,23 @@ resource "google_project" "iac" {
   deletion_policy     = "PREVENT"
 }
 
+# Data Access audit logs on glitch-iac record who read or wrote state and keys. Replaces bucket
+# access logs (CKV_GCP_62). Volume is a handful of entries per CI run, well within the free tier.
+resource "google_project_iam_audit_config" "iac" {
+  project = google_project.iac.project_id
+  service = "allServices"
+
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_WRITE"
+  }
+}
+
 resource "google_project_service" "iac" {
   for_each = toset(local.services)
 
