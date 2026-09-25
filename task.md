@@ -13,7 +13,13 @@ Mirrors the ClickUp "GlitchLZ — implementation" task (Vladimir space).
 | CI: GitHub Actions + WIF for glitch-lz | done | PR gates: fmt, validate, tflint, checkov, plan (lz-plan SA); apply via env `lz-apply`. Plans not posted to PRs (public logs) |
 | Promote DRS from dry run to enforced | pending | After reviewing dry-run violations |
 | Remove legacy tags | pending | wedding: when retired/rebuilt; GlitchHub dev: after prod promotion + dev teardown |
-| Dev kill switch (budget-alerts → detach billing) | in-progress | Log-only test passed; enforcing; real tests: prod → 403, dev → detach + re-link |
+| Dev kill switch (budget-alerts → detach billing) | done | Enforcing; tested: prod → 403, dev → detached + re-linked, no drift |
 | VPC-SC dry-run perimeter | pending | Once internal workload projects exist |
-| Delete old GlitchHub $5 budget | pending | After 3-projects creates `project:vk-personal-dashboard` |
-| Operators + PAM (ADR 045) | in-progress | Kalina: read-only + PAM (dev self, prod/org approved by Vlad). Vlad unchanged for now |
+| Delete old GlitchHub $5 budget | done | |
+| Operators + PAM (ADR 045) | done | Kalina: read-only + PAM (dev self, prod/org approved by Vlad); entitlements visible to her. Vlad unchanged |
+| Onboarding docs for operators (CONTRIBUTING / repo CLAUDE.md) | pending | Vlad onboards Kalina 2026-09-27 |
+
+## Handoff
+
+- LZ: stages 0–3 live, kill switch enforcing, PAM for Kalina. Next LZ items: DRS dry-run review → enforce; VPC-SC later.
+- GlitchOps: projects + GitHub envs ready; next: SSG choice, ClickUp export, first glitch-modules, CI.
