@@ -59,3 +59,17 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   `roles/iam.securityAdmin` (3-projects grants SA admin per adopted project); Data Access audit logs
   on glitch-iac replace bucket access logs | Reason: checkov CKV_GCP_115 / 45 / 62 | Tradeoffs:
   planner roles must be extended when a new stage's plan hits a 403.
+- ADR 031: Pre-LZ projects (`vk-personal-dashboard`, `wedding2026-vk`) are tagged `legacy=true` and
+  exempt from the CMEK and DRS policies; location / ingress / baseline policies still apply | Reason:
+  keep live apps deployable without rework; exemption is removed when a project is rebuilt in the
+  factory | Tradeoffs: rejected enforcing everything (breaks wedding source deploys) and a separate
+  Legacy folder (touches IAM inheritance).
+- ADR 032: DRS (`iam.managed.allowedPolicyMembers`) starts in dry run; other new policies are
+  enforced immediately | Reason: service-agent exceptions for the managed constraint are poorly
+  documented; all other policies only affect resource creation and every non-legacy project already
+  complies | Tradeoffs: a window where DRS only logs.
+- ADR 033: CMEK required for Storage, BigQuery, Artifact Registry and Compute only (the services
+  Autokey keys for free); CMEK keys only from projects under Shared | Reason: cost ceiling | Tradeoffs:
+  Secret Manager / Pub/Sub / Cloud SQL / Firestore stay on Google-managed keys until needed.
+- ADR 034: IDs are looked up with data sources (folders by display name, projects by ID) instead
+  of committed or passed as secrets | Reason: public repo, fewer CI secrets.
