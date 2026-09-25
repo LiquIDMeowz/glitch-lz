@@ -39,7 +39,9 @@ Full design and ADRs 001–024 are in the private design doc (ClickUp, Landing Z
   (cost). Consequences: no secrets or real IDs in Git, WIF pinned to repo/owner IDs + ref, no
   `pull_request_target`, no self-hosted runners, plans not posted to PRs.
 - ADR 026: State buckets in `0-bootstrap` are encrypted with Autokey keys stored in `glitch-iac`
-  itself (same-project key storage) | Reason: Autokey keys are in the free tier (100 key versions,
+  itself — same-project key storage configured on the **Shared folder** (the provider only supports
+  folder-level Autokey config), so all Shared projects keep their own keys; DEV / PROD use the
+  dedicated key projects from 2-security | Reason: Autokey keys are in the free tier (100 key versions,
   10k ops/month), manual keys are $0.06/version/month; the LZ state must not depend on key projects
   that a later stage manages | Tradeoffs: rejected Google-managed encryption (breaks the CMEK rule)
   and manual keys in glitch-iac (cost).
