@@ -17,7 +17,7 @@ Mirrors the ClickUp "GlitchLZ — implementation" task (Vladimir space).
 | VPC-SC dry-run perimeter | pending | Once internal workload projects exist |
 | Delete old GlitchHub $5 budget | done | |
 | Operators + PAM (ADR 045) | done | Kalina: read-only + PAM (dev self, prod/org approved by Vlad); entitlements visible to her. Vlad unchanged |
-| Onboarding docs for operators (CONTRIBUTING / repo CLAUDE.md) | pending | Vlad onboards Kalina 2026-09-27 |
+| Onboarding docs for operators (CONTRIBUTING / repo CLAUDE.md) | done | #14; app template + setup script come with the wiki |
 
 ## Handoff
 

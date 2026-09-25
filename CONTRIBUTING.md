@@ -51,6 +51,30 @@ Run a plan locally without write access: `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=lz-
    push to the app's CMEK Artifact Registry repo, `terraform apply` `infra/` (modules pinned by tag),
    deploy the image digest; promote the same digest to prod after approval.
 
+### What `repo_id` means
+
+`repo_id` in a factory entry is the **numeric ID of the app's GitHub repo** — the one repo GCP will
+trust to deploy into that app's two projects. The factory writes it into the WIF bindings:
+
+- a CI job in environment `dev` of that repo → may act as `deployer@glitch-<app>-dev`
+- a CI job in environment `prod` of that repo, **on `main` only** → `deployer@glitch-<app>-prod`
+
+No keys anywhere: GitHub signs "this is repo X, environment dev", GCP exchanges it for a
+short-lived deployer token. The deployer builds and deploys; the app itself runs as a separate
+runtime SA created by the module, with only the data roles it needs. The ID (not the name) is used,
+so a rename keeps working and a deleted-and-recreated repo with the same name is *not* trusted.
+
+### Template vs. setup script (planned, built with the GlitchOps wiki)
+
+A GitHub template copies **files**, not **settings**, so a new app repo takes two pieces:
+
+| Piece | Gives you |
+|---|---|
+| `glitch-app-template` ("Use this template") | CI workflow (build → dev → promote to prod), `infra/` skeleton using `glitch-modules`, pre-commit hook, `.gitignore`, `project.md` / `task.md`, repo `CLAUDE.md` |
+| `setup-app-repo.sh <app>` | GitHub environments `dev` / `prod` (reviewers, `main` only), variables from the 3-projects outputs, ruleset, secret scanning |
+
+Target flow: template → note repo ID → factory PR → approve → `setup-app-repo.sh <app>` → push code.
+
 ## Rules that bite (read before changing things)
 
 - **Never create projects by hand** — only the factory. Never click-ops org settings.
