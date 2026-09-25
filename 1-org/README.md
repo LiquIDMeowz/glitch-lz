@@ -27,3 +27,18 @@ as a factory project.
 
 Review the org policy dry-run violation entries in Cloud Audit Logs for a while, add any
 legitimate principal to `allowedMemberSubjects`, then rename `dry_run_spec` to `spec`.
+
+## Operators & PAM (ADR 045)
+
+Kalina has standing read-only access and elevates with PAM; Vlad keeps his standing roles and
+approves. Requests (console: IAM & Admin → Privileged Access Manager, or CLI):
+
+```sh
+gcloud config set billing/quota_project glitch-iac   # once
+gcloud pam grants create --entitlement=dev-writer  --folder=<DEV folder ID>  --location=global --requested-duration=2h --justification="..."
+gcloud pam grants create --entitlement=prod-writer --folder=<PROD folder ID> --location=global --requested-duration=1h --justification="..."   # Vlad approves
+gcloud pam grants create --entitlement=org-admin   --organization=<org ID>   --location=global --requested-duration=1h --justification="..."   # Vlad approves
+```
+
+A fresh org needs `gcloud pam check-onboarding-status --organization=<org> --location=global` once
+before the first apply, to create PAM's service agent (ERR-005).
