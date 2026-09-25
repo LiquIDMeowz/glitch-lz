@@ -36,3 +36,11 @@ CI strips results that carry `suppressions` before upload (`jq`); threads auto-r
 ### Resolution
 0-bootstrap provider sets `billing_project = glitch-iac` + `user_project_override = true` (only this stage runs with user credentials; CI SAs bill to glitch-iac anyway).
 
+
+## ERR-005 — 1-org apply: PAM org service agent does not exist
+- **Date:** 2026-09-26 (run 36194498987)
+- **Tried:** `google_organization_iam_member` granting `roles/privilegedaccessmanager.serviceAgent` to `service-org-<org>@gcp-sa-pam.iam.gserviceaccount.com` right after enabling the PAM API.
+- **Result:** `Error 400: Service account service-org-***@gcp-sa-pam.iam.gserviceaccount.com does not exist.` Org-level service agents are created on demand; enabling the API in glitch-iac doesn't create it. 2-security / 3-projects applies were cancelled.
+
+### Resolution
+Ran `gcloud pam check-onboarding-status --organization=<org> --location=global --billing-project=glitch-iac` once (the call behind the console's "Set up PAM"); it provisioned the agent, and the re-run applied. For a fresh org: run it before the first 1-org apply.

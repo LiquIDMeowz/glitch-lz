@@ -28,3 +28,14 @@ resource "google_organization_iam_member" "operator_read" {
   role   = each.value.role
   member = "user:${local.operators[each.value.operator]}"
 }
+
+# Operators' CLI calls (e.g. `gcloud pam grants create`) need a quota project with the APIs
+# enabled; otherwise they hit the shared Cloud SDK project's quota (ERR-004). Set once with
+# `gcloud config set billing/quota_project glitch-iac`. Vlad is covered by his standing roles.
+resource "google_project_iam_member" "operator_quota" {
+  for_each = local.operators
+
+  project = "glitch-iac"
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "user:${each.value}"
+}
